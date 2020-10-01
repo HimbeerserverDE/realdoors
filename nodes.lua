@@ -5,4 +5,11 @@ realdoors.register_mechanical({
 	tex_inv = "doors_item_wood.png",
 })
 
+realdoors.register_electronic({
+	name = "wood",
+	desc = "Electronically locked wooden door",
+	tex = "doors_door_wood.png",
+	tex_inv = "doors_item_wood.png",
+})
+
 minetest.log("verbose", "[realdoors] Loaded nodes.lua v" .. realdoors.v)

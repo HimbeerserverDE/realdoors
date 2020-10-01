@@ -40,10 +40,6 @@ realdoors.mechanical_formspec_handler = function(pos, fields, sender)
 	end
 end
 
-realdoors.show_mechanical_formspec = function(name)
-	minetest.show_formspec(name, "realdoors_mechanical", realdoors.mechanical_formspec)
-end
-
 realdoors.register_mechanical = function(def)
 	minetest.register_node("realdoors:door_" .. def.name .. "_a", {
 		description = def.desc .. " (left)",
@@ -121,9 +117,11 @@ realdoors.toggle = function(pos)
 	local meta = minetest.get_meta(pos)
 	local open = false
 	if meta:get_string("state") == "open" then open = true end
-	local def = realdoors.mechanical_defs[node.name:gsub("realdoors:door_", ""):gsub("_a", ""):gsub("_b", "")]
-	local align = node.name:gsub("realdoors:door_", ""):gsub(def.name, ""):gsub("_", "")
-	local newname = "realdoors:door_" .. def.name
+	local def = realdoors.mechanical_defs[node.name:gsub("realdoors:door_", ""):gsub("realdoors:edoor_", ""):gsub("_a", ""):gsub("_b", "")]
+	local align = node.name:gsub("realdoors:door_", ""):gsub("realdoors:edoor_", ""):gsub(def.name, ""):gsub("_", "")
+	local elec = ""
+	if node.name:find("realdoors:edoor_", nil, true) then elec = "e" end
+	local newname = "realdoors:" .. elec .. "door_" .. def.name
 	if align == "a" then
 		newname = newname .. "_b"
 	else
