@@ -86,7 +86,7 @@ realdoors.register_electronic({
 	name = "steelglass1",
 	desc = "Steel glass door 1",
 	tex = "doors_door_steelglass1.png",
-	tex_inv = "doors_item_steelglass2.png",
+	tex_inv = "doors_item_steelglass1.png",
 })
 
 realdoors.register_electronic({

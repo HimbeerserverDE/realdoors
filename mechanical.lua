@@ -117,7 +117,7 @@ realdoors.toggle = function(pos)
 	local meta = minetest.get_meta(pos)
 	local open = false
 	if meta:get_string("state") == "open" then open = true end
-	local def = realdoors.mechanical_defs[node.name:gsub("realdoors:door_", ""):gsub("realdoors:edoor_", ""):gsub("_a", ""):gsub("_b", "")]
+	local def = realdoors.mechanical_defs[node.name:gsub("realdoors:door_", ""):gsub("realdoors:edoor_", ""):gsub("_a", ""):gsub("_b", "")] or realdoors.electronic_defs[node.name:gsub("realdoors:door_", ""):gsub("realdoors:edoor_", ""):gsub("_a", ""):gsub("_b", "")]
 	local align = node.name:gsub("realdoors:door_", ""):gsub("realdoors:edoor_", ""):gsub(def.name, ""):gsub("_", "")
 	local elec = ""
 	if node.name:find("realdoors:edoor_", nil, true) then elec = "e" end
