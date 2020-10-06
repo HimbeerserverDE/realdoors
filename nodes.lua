@@ -117,4 +117,32 @@ realdoors.register_mechanical({
 	tex_inv = "xdecor_prison_door_inv.png",
 })
 
+realdoors.register_mechanical({
+	name = "glass",
+	desc = "Glass door",
+	tex = "doors_door_glass.png",
+	tex_inv = "doors_item_glass.png",
+})
+
+realdoors.register_mechanical({
+	name = "obsidianglass",
+	desc = "Obsidian glass door",
+	tex = "doors_door_obsidian_glass.png",
+	tex_inv = "doors_item_obsidian_glass.png",
+})
+
+realdoors.register_mechanical({
+	name = "woodpanel",
+	desc = "Wood panel door",
+	tex = "doors_door_woodpanel1.png",
+	tex_inv = "doors_item_woodpanel1.png",
+})
+
+realdoors.register_electronic({
+	name = "steelpanel",
+	desc = "Steel panel door",
+	tex = "doors_door_steelpanel1.png",
+	tex_inv = "doors_item_steelpanel1.png",
+})
+
 minetest.log("verbose", "[realdoors] Loaded nodes.lua v" .. realdoors.v)
