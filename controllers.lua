@@ -46,6 +46,12 @@ realdoors.codepad_formspec = "size[5,6]" ..
 "button[1,4;1,1;seven;7]button[2,4;1,1;eight;8]button[3,4;1,1;nine;9]" ..
 "button[1,5;1,1;clear;C]button[2,5;1,1;zero;0]button[3,5;1,1;submit;E]"
 
+realdoors.saferoute_formspec = "size[10,5]" ..
+"list[context;keyslot;1,1;1,1]" ..
+"button[3,1;3,1;trigger;Use key]" ..
+"button[3,3;3,1;alarm;Trigger alarm]" ..
+"list[current_player;main;1,2;9,1]"
+
 realdoors.keyswitch_formspec_handler = function(pos, fields, sender)
 	local meta = minetest.get_meta(pos)
 	if not fields.trigger then return end
@@ -204,6 +210,43 @@ realdoors.codepad_formspec_handler_2 = function(pos)
 	mesecon.receptor_off(pos, realdoors.connection_rules)
 end
 
+realdoors.saferoute_formspec_handler = function(pos, fields, sender)
+	local meta = minetest.get_meta(pos)
+	if fields.alarm and meta:get_string("alarm") == "" then
+		meta:set_string("alarm", "yes")
+		mesecon.receptor_on(pos, realdoors.connection_rules)
+		local node = minetest.get_node(pos)
+		node.name = "realdoors:saferoute_alarm"
+		minetest.swap_node(pos, node)
+		return
+	end
+	if not fields.trigger then return end
+	local inv = minetest.get_inventory({type = "node", pos = pos})
+	local keystack = inv:get_stack("keyslot", 1)
+	if keystack:get_name() ~= "realdoors:key" then return end
+	local key = keystack:get_meta():get_string("shape")
+	if meta:get_string("key") == "" then
+		meta:set_string("key", key)
+		minetest.chat_send_player(sender:get_player_name(), "This SafeRoute has been linked to key " .. key)
+		return
+	end
+	if key == meta:get_string("key") then
+		meta:set_string("alarm", "")
+		local node = minetest.get_node(pos)
+		if node.name == "realdoors:saferoute_alarm" then
+			node.name = "realdoors:saferoute"
+			minetest.swap_node(pos, node)
+		end
+		mesecon.receptor_on(pos, realdoors.connection_rules)
+		minetest.after(1, realdoors.saferoute_formspec_handler_2, pos)
+	else
+		minetest.chat_send_player(sender:get_player_name(), "Your key does not match the lock")
+	end
+end
+realdoors.saferoute_formspec_handler_2 = function(pos)
+	mesecon.receptor_off(pos, realdoors.connection_rules)
+end
+
 minetest.register_node("realdoors:keyswitch", {
 	description = "Key switch",
 	drawtype = "nodebox",
@@ -296,6 +339,82 @@ minetest.register_node("realdoors:codepad", {
 			rules = realdoors.connection_rules,
 		},
 	},
+})
+
+minetest.register_node("realdoors:saferoute", {
+	description = "SafeRoute system",
+	drawtype = "nodebox",
+	tiles = {"saferoute_default.png"},
+	paramtype = "light",
+	paramtype2 = "facedir",
+	is_ground_content = false,
+	sunlight_propagates = false,
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.1, -0.125, 0.4, 0.1, 0.125, 0.5},
+		},
+	},
+	groups = {snappy = 1},
+	on_construct = function(pos)
+		minetest.get_meta(pos):set_string("formspec", realdoors.saferoute_formspec)
+		local inv = minetest.get_inventory({type = "node", pos = pos})
+		inv:set_size("keyslot", 1)
+	end,
+	on_receive_fields = function(pos, formname, fields, sender)
+		realdoors.saferoute_formspec_handler(pos, fields, sender)
+	end,
+	mesecons = {
+		receptor = {
+			state = mesecon.state.off,
+			rules = realdoors.connection_rules,
+		},
+	},
+})
+
+minetest.register_node("realdoors:saferoute_alarm", {
+	description = "SafeRoute system (alarm going off)",
+	drawtype = "nodebox",
+	tiles = {"saferoute_active.png"},
+	paramtype = "light",
+	paramtype2 = "facedir",
+	is_ground_content = false,
+	sunlight_propagates = false,
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.1, -0.125, 0.4, 0.1, 0.125, 0.5},
+		},
+	},
+	groups = {snappy = 1, not_in_creative_inventory = 1},
+	on_construct = function(pos)
+		minetest.get_meta(pos):set_string("formspec", realdoors.saferoute_formspec)
+		local inv = minetest.get_inventory({type = "node", pos = pos})
+		inv:set_size("keyslot", 1)
+	end,
+	on_receive_fields = function(pos, formname, fields, sender)
+		realdoors.saferoute_formspec_handler(pos, fields, sender)
+	end,
+	mesecons = {
+		receptor = {
+			state = mesecon.state.on,
+			rules = realdoors.connection_rules,
+		},
+	},
+})
+
+minetest.register_abm({
+	label = "SafeRoute alarm",
+	nodenames = {"realdoors:saferoute_alarm"},
+	interval = 1,
+	chance = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		minetest.sound_play("lockbeep_error", {
+			pos = pos,
+			max_hear_distance = 8,
+			gain = 4.0,
+		})
+	end,
 })
 
 minetest.register_node("realdoors:toggler", {
