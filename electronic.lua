@@ -5,9 +5,29 @@ realdoors.electronic_formspec = "size[16,4]" ..
 "button[3,1;3,1;cardcheck;Use keycard]" ..
 "list[context;cardslot;7,1;1,1;1]" ..
 "button[9,1;3,1;carddup;Copy card]" ..
-"button[13,1;3,1;cardset;Change card]" ..
+"button[13,1;3,1;cardadd;Add card]" ..
+"button[13,2;3,1;cardrm;Remove card]" ..
+"button[13,3;3,1;cardrst;Remove all cards]" ..
 "button[1,3;3,1;close;Close door]" ..
 "list[current_player;main;1,2;9,1]"
+
+local function table_contains(t, e)
+	for _, v in ipairs(t) do
+		if v == e then
+			return true
+		end
+	end
+	return false
+end
+
+local function table_remove(t, e)
+	for k, v in ipairs(t) do
+		if v == e then
+			t[k] = nil
+		end
+	end
+	return t
+end
 
 realdoors.electronic_formspec_handler = function(pos, fields, sender)
 	local meta = minetest.get_meta(pos)
@@ -20,6 +40,9 @@ realdoors.electronic_formspec_handler = function(pos, fields, sender)
 	local cardstack = inv:get_stack("cardslot", 1)
 	if cardstack:get_name() ~= "realdoors:card" then return end
 	local key = cardstack:get_meta():get_string("id")
+	
+	local reqkeys = minetest.deserialize(meta:get_string("keys")) or {}
+	
 	if fields.carddup then
 		local dupstack = inv:get_stack("cardslot", 2)
 		if dupstack:get_name() ~= "realdoors:card_blank" then return end
@@ -28,19 +51,62 @@ realdoors.electronic_formspec_handler = function(pos, fields, sender)
 		inv:set_stack("cardslot", 2, dupstack)
 		return
 	end
-	if fields.cardset then
+	if fields.cardadd then
 		local newstack = inv:get_stack("cardslot", 2)
 		if newstack:get_name() ~= "realdoors:card" then return end
 		if key == meta:get_string("key") then
-			meta:set_string("key", newstack:get_meta():get_string("id"))
-			minetest.chat_send_player(sender:get_player_name(), "This door has been linked to card " .. newstack:get_meta():get_string("id"))
+			table.insert(reqkeys, newstack:get_meta():get_string("id"))
+			meta:set_string("keys", minetest.serialize(reqkeys))
+			minetest.chat_send_player(sender:get_player_name(), "The following card has been added: " .. newstack:get_meta():get_string("id"))
 			minetest.sound_play("lockbeep_ok", {
 				pos = pos,
 				max_hear_distance = 8,
 				gain = 4.0,
 			})
 		else
-			minetest.chat_send_player(sender:get_player_name(), "Your keycard is not valid")
+			minetest.chat_send_player(sender:get_player_name(), "Your keycard is not the correct master card")
+			minetest.sound_play("lockbeep_error", {
+				pos = pos,
+				max_hear_distance = 8,
+				gain = 4.0,
+			})
+		end
+		return
+	end
+	if fields.cardrm then
+		local newstack = inv:get_stack("cardslot", 2)
+		if newstack:get_name() ~= "realdoors:card" then return end
+		if key == meta:get_string("key") then
+			reqkeys = table_remove(reqkeys, newstack:get_meta():get_string("id"))
+			meta:set_string("keys", minetest.serialize(reqkeys))
+			minetest.chat_send_player(sender:get_player_name(), "The following card has been removed: " .. newstack:get_meta():get_string("id"))
+			minetest.sound_play("lockbeep_ok", {
+				pos = pos,
+				max_hear_distance = 8,
+				gain = 4.0,
+			})
+		else
+			minetest.chat_send_player(sender:get_player_name(), "Your keycard is not the correct master card")
+			minetest.sound_play("lockbeep_error", {
+				pos = pos,
+				max_hear_distance = 8,
+				gain = 4.0,
+			})
+		end
+		return
+	end
+	if fields.cardrst then
+		if key == meta:get_string("key") then
+			reqkeys = {}
+			meta:set_string("keys", minetest.serialize(reqkeys))
+			minetest.chat_send_player(sender:get_player_name(), "All cards except for the master card have been removed")
+			minetest.sound_play("lockbeep_ok", {
+				pos = pos,
+				max_hear_distance = 8,
+				gain = 4.0,
+			})
+		else
+			minetest.chat_send_player(sender:get_player_name(), "Your keycard is not the correct master card")
 			minetest.sound_play("lockbeep_error", {
 				pos = pos,
 				max_hear_distance = 8,
@@ -52,7 +118,7 @@ realdoors.electronic_formspec_handler = function(pos, fields, sender)
 	if not fields.cardcheck then return end
 	if meta:get_string("key") == "" then
 		meta:set_string("key", key)
-		minetest.chat_send_player(sender:get_player_name(), "This door has been linked to card " .. key)
+		minetest.chat_send_player(sender:get_player_name(), "The following card is now the master card: " .. key)
 		minetest.sound_play("lockbeep_ok", {
 			pos = pos,
 			max_hear_distance = 8,
@@ -60,7 +126,7 @@ realdoors.electronic_formspec_handler = function(pos, fields, sender)
 		})
 		return
 	end
-	if key == meta:get_string("key") then
+	if table_contains(reqkeys, key) then
 		realdoors.toggle(pos)
 		minetest.sound_play("lockbeep_ok", {
 			pos = pos,
