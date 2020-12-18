@@ -6,6 +6,7 @@ local mp = minetest.get_modpath(minetest.get_current_modname())
 dofile(mp .. "/mechanical.lua")
 dofile(mp .. "/electronic.lua")
 dofile(mp .. "/controllers.lua")
+dofile(mp .. "/manager.lua")
 
 dofile(mp .. "/nodes.lua")
 
