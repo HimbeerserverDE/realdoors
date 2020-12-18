@@ -11,7 +11,7 @@ realdoors.electronic_formspec = "size[16,4]" ..
 "button[1,3;3,1;close;Close door]" ..
 "list[current_player;main;1,2;9,1]"
 
-local function table_contains(t, e)
+function table_contains(t, e)
 	for _, v in ipairs(t) do
 		if v == e then
 			return true
@@ -20,7 +20,7 @@ local function table_contains(t, e)
 	return false
 end
 
-local function table_remove(t, e)
+function table_remove(t, e)
 	for k, v in ipairs(t) do
 		if v == e then
 			t[k] = nil
