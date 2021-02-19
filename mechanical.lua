@@ -115,6 +115,7 @@ end
 realdoors.toggle = function(pos)
 	local node = minetest.get_node(pos)
 	local meta = minetest.get_meta(pos)
+	if not node.name:match("^realdoors%:e?door.*") then return end
 	local open = false
 	if meta:get_string("state") == "open" then open = true end
 	local def = realdoors.mechanical_defs[node.name:gsub("realdoors:door_", ""):gsub("realdoors:edoor_", ""):gsub("_a", ""):gsub("_b", "")] or realdoors.electronic_defs[node.name:gsub("realdoors:door_", ""):gsub("realdoors:edoor_", ""):gsub("_a", ""):gsub("_b", "")]
